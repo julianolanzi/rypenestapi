@@ -6,7 +6,6 @@ import {
   Param,
   Delete,
   Put,
-  Res,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
@@ -31,7 +30,7 @@ export class UsersController {
 
       return user;
     } catch (error) {
-      return { error: error };
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -39,14 +38,27 @@ export class UsersController {
   findAll() {
     return this.usersService.findAll();
   }
-  @Get(':email')
-  findEmail(@Param('email') email: string) {
-    return this.usersService.findByEmail(email);
-  }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
+  async findOne(@Param('id') id: string) {
+    try {
+      const user = await this.usersService.findOne(id);
+      if (user === null || undefined) {
+        throw new HttpException('User does not exist', HttpStatus.BAD_REQUEST);
+      }
+
+      const response = {
+        name: user.name,
+        lastname: user.lastname,
+        age: user.age,
+        email: user.email,
+        createdAt: user.createdAt,
+      };
+
+      return response;
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Put(':id')
@@ -55,7 +67,16 @@ export class UsersController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  async remove(@Param('id') id: string) {
+    try {
+      const user = await this.usersService.remove(id);
+      console.log(user);
+      if (user.deletedCount == 0) {
+        throw new HttpException('User does not exist', HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException('User remove sucess', HttpStatus.ACCEPTED);
+    } catch (error) {
+      return error;
+    }
   }
 }

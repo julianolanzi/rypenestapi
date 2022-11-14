@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { isString, minLength } from 'class-validator';
 import { now, Document } from 'mongoose';
 
 export type UserDocument = User & Document;

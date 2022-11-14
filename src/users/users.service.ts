@@ -4,29 +4,46 @@ import { Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserDocument } from './entities/user.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
-  create(createUserDto: CreateUserDto) {
-    const user = new this.UserModel(createUserDto);
-    return user.save();
+  async create(createUserDto: CreateUserDto) {
+    const payload = {
+      ...createUserDto,
+      password: await bcrypt.hash(createUserDto.password, 10),
+    };
+
+    const user = new this.UserModel(payload);
+    const data = await user.save();
+
+    const response = {
+      id: data._id,
+      name: data.name,
+      lastname: data.lastname,
+      age: data.age,
+      email: data.email,
+    };
+    return response;
   }
 
   findAll() {
     return this.UserModel.find();
   }
 
-  findOne(id: string) {
-    return this.UserModel.findById(id);
+  async findOne(id: string) {
+    const user = await this.UserModel.findById(id);
+
+    return user;
   }
 
   findByEmail(email: string) {
     return this.UserModel.findOne({ email });
   }
 
-  update(id: string, updateUserDto: UpdateUserDto) {
-    return this.UserModel.findByIdAndUpdate(
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    const user = await this.UserModel.findByIdAndUpdate(
       {
         _id: id,
       },
@@ -37,10 +54,19 @@ export class UsersService {
         new: true,
       },
     );
+
+    const response = {
+      id: user._id,
+      name: user.name,
+      lastname: user.lastname,
+      age: user.age,
+      email: user.email,
+    };
+    return response;
   }
 
-  remove(id: string) {
-    return this.UserModel.deleteOne({
+  async remove(id: string) {
+    return await this.UserModel.deleteOne({
       _id: id,
     }).exec();
   }
