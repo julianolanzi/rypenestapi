@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -35,7 +35,19 @@ export class UsersService {
   async findOne(id: string) {
     const user = await this.UserModel.findById(id);
 
-    return user;
+    if (user === null || undefined) {
+      throw new HttpException('User does not exist', HttpStatus.BAD_REQUEST);
+    }
+
+    const response = {
+      name: user.name,
+      lastname: user.lastname,
+      age: user.age,
+      email: user.email,
+      createdAt: user.createdAt,
+    };
+
+    return response;
   }
 
   findByEmail(email: string) {
